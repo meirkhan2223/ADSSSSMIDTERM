@@ -26,6 +26,12 @@ button{background:linear-gradient(#80b4f0,#5e9be0);border:1px solid #5a86b8;colo
 table.rt{border-collapse:collapse;background:#fff;font-size:14px}table.rt td,table.rt th{border:1px solid #000;padding:2px 6px;text-align:left}pre.tt{background:#fff;border:0;font:13px ui-monospace,Menlo,monospace;max-width:1000px;overflow-x:auto;white-space:pre-wrap}.tt u{display:inline-block;margin-top:4px}
 footer{padding:14px 24px;font-size:13px;color:#444}
 .CodeMirror{height:430px;width:min(900px,100%);border:1px solid #5a86b8;font:14px ui-monospace,Menlo,monospace;line-height:1.45}.CodeMirror-focused{box-shadow:0 0 0 2px #7db3ee}
+button#rx{background:linear-gradient(#4e9a4e,#357535);border-color:#2a5f2a;color:#fff}
+button#rcu,button#rc{background:linear-gradient(#3b4b5c,#27323e);border-color:#1b242d;color:#fff}
+.exc{max-width:900px;border:1px solid #ccc;border-left:5px solid #c33;background:#f2f2f2;padding:8px 12px;margin:0 0 12px}.exc.g{border-left-color:#3a9a3a}
+.exh{margin-bottom:6px}.exh span{color:#666;font-size:13px;margin-left:4px}.exc.b .exh b{color:#b02020}.exc.g .exh b{color:#1f7a1f}
+.ex3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.ex3 pre,.exc pre{margin:2px 0 0;background:#e2e2e2;min-height:20px;max-height:240px;overflow:auto}.exc small{color:#555}.exc .hn{margin:6px 0 0;color:#8a2020;font-size:14px}
+#cin{height:90px;width:min(900px,100%)}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script></head><body>
@@ -103,14 +109,18 @@ function info(){const id=arg||S.pid||P[0].id,p=pr(id);S.pid=id;const hist=S.runs
  <h2>${p.id}. ${esc(p.title)}</h2><span class="b">${p.lvl}</span><span class="b">${esc(p.topic)}</span><span class="b">Time limit: 3 s</span><span class="b">Memory limit: 256 MB</span>
  <p style="margin:8px 0"><a onclick="S.lng=(S.lng||'kz')=='kz'?'en':'kz';save();render()">🌐 ${(S.lng||'kz')=='kz'?'English (емтихандағы түпнұсқа)':'Қазақша көрсету'}</a></p><pre style="max-width:900px">${esc((S.lng||'kz')=='kz'&&p.kz?p.kz:p.text)}</pre><div class="ex">${p.ex.map((e,i)=>`<div><b>Input ${i+1}</b><pre>${esc(e.i)}</pre></div><div><b>Output ${i+1}</b><pre>${esc(e.o)}</pre></div>`).join('')}</div>
  <div class="sec" style="margin-top:20px">Submit a solution</div><p>Language: <select id="lg" onchange="sw(this.value)"><option value="cpp">g++</option><option value="py">python</option></select>
- <button id="sb" onclick="submit()">Send!</button> <span id="st"></span></p><textarea id="code" spellcheck="false" oninput="sv()"></textarea>
+ <button id="sb" onclick="submit()">Send!</button> <span id="st"></span> <span id="lk" style="color:#8a5a00;font-size:14px"></span></p><textarea id="code" spellcheck="false" oninput="sv()"></textarea>
  <p style="color:#555;font-size:14px">Кез келген алгоритм қабылданады: жауап пен уақыт қана тексеріледі. Қайта-қайта жібере бер, тарих сақталады.</p>
+ <p style="margin:10px 0 6px"><button id="rx" onclick="runEx()">Run examples</button> <button id="rcu" onclick="toggleCu()">Custom input</button> <span style="color:#555;font-size:14px">local run, not graded</span></p>
+ <p style="color:#555;font-size:14px;margin:4px 0 10px">Local run — not graded. Pass all examples first to unlock “Send”, then send to be graded.</p>
+ <div id="cu" style="display:${S.cuOpen?'block':'none'};margin-bottom:12px"><textarea id="cin" spellcheck="false" placeholder="Өз кірісіңді осында жаз…" oninput="S.cin=this.value;save()">${esc(S.cin||'')}</textarea><br><button id="rc" onclick="runCu()">Run</button><div id="cout"></div></div>
+ <div id="exr">${exState&&exState.pid==id?exState.html:''}</div>
  ${lr&&lr.pid==id?`<div class="sec" id="res">Result of run ${lr.id}</div>${reportBody(lr)}`:''}
  <div class="sec" style="margin-top:20px">History of ${id}</div>`+(hist.length?`<table class="t"><tr><th>Run ID</th><th>Time</th><th>Language</th><th>Result</th><th>Tests</th><th>Report</th><th>Code</th></tr>`+
  hist.map(r=>`<tr class="${r.result=='OK'?'ok':'bad'}"><td>${r.id}</td><td>${fmt(r.time)}</td><td>${LN[r.lang]}</td><td>${r.result}</td><td>${passed(r)}/10</td><td><a onclick="go('report',${r.id})">View</a></td><td><a onclick="loadCode(${r.id})">Load into editor</a></td></tr>`).join('')+`</table>`:'<p>Әлі жіберілген жоқ.</p>')}
 let ed=null,loading=false;const MODE={py:'python',cpp:'text/x-c++src'};
 const gc=()=>ed?ed.getValue():$('#code').value,sc=v=>{loading=true;ed?ed.setValue(v):$('#code').value=v;loading=false};
-const ld=()=>sc(S.c[S.pid+S.lang]??TPL[S.lang]),sv=()=>{S.c[S.pid+S.lang]=gc();save()};
+const ld=()=>sc(S.c[S.pid+S.lang]??TPL[S.lang]),sv=()=>{S.c[S.pid+S.lang]=gc();save();updLock()};
 const ins=(t,x)=>{const s=t.selectionStart;t.value=t.value.slice(0,s)+x+t.value.slice(t.selectionEnd);t.selectionStart=t.selectionEnd=s+x.length;sv()};
 function fbKeys(e){const t=e.target,s=t.selectionStart;
  if(e.key=='Tab'){e.preventDefault();ins(t,'    ')}
@@ -119,10 +129,58 @@ function initInfo(){$('#lg').value=S.lang;const ta=$('#code');
  if(window.CodeMirror){ed=CodeMirror.fromTextArea(ta,{mode:MODE[S.lang],theme:'dracula',lineNumbers:true,indentUnit:4,tabSize:4,indentWithTabs:false,smartIndent:true,autoCloseBrackets:true,matchBrackets:true,
   extraKeys:{Tab:c=>c.somethingSelected()?c.indentSelected('add'):c.replaceSelection('    ','end'),'Shift-Tab':c=>c.indentSelected('subtract')}});ed.on('change',()=>{if(!loading)sv()})}
  else ta.addEventListener('keydown',fbKeys);
- ld()}
-function sw(l){sv();S.lang=l;save();if(ed)ed.setOption('mode',MODE[l]);ld()}
-async function submit(){if(busy)return;busy=true;$('#sb').disabled=true;$('#st').textContent='Testing…';const code=gc(),pid=S.pid,lang=S.lang;
- let r;try{r=await runAll(pid,lang,code)}catch(e){busy=false;$('#sb').disabled=false;$('#st').textContent='Қате: '+(e.message||e);return}busy=false;
+ ld();updLock()}
+function sw(l){sv();S.lang=l;save();if(ed)ed.setOption('mode',MODE[l]);ld();updLock()}
+const LOCK=true;let okKey=null,exState=null;
+const curKey=()=>S.pid+'|'+S.lang+'|'+gc();
+function updLock(){const b=$('#sb');if(!b)return;const ok=!LOCK||okKey===curKey();b.disabled=busy||!ok;
+ const l=$('#lk');if(l)l.textContent=ok?'':'🔒 алдымен Run examples: барлық мысал өтуі керек';
+ const x=$('#rx');if(x)x.disabled=busy}
+async function runLocal(lang,code,tests){await ensure();
+ if(lang=='cpp')return runCpp(code,tests);
+ const ce=JSON.parse(await call('syntax',[code]));if(ce.ce)return ce;const res=[];
+ for(let i=0;i<tests.length;i++){$('#st').textContent=`Running ${i+1}/${tests.length}…`;
+  try{res.push(JSON.parse(await call('run_py',[code,tests[i].i,tests[i].o,i],TLMS)))}
+  catch(e){if(e!=='TIMEOUT')throw e;res.push({...base(i,tests[i]),v:'TLE',t:6,rt:6,info:'time limit exceeded (>6 s, браузерде)'});await ensure()}}
+ return{res}}
+function exHtml(r){
+ if(r.ce!==undefined&&!r.res)return `<p><b style="color:#b02020">Compilation error</b></p><pre style="max-width:900px">${esc(r.ce)}</pre>`;
+ const ok=r.res.filter(t=>t.v=='AC').length;
+ return `<p style="font-weight:bold">Examples passed: ${ok} of ${r.res.length}</p>`+r.res.map((t,i)=>{const g=t.v=='AC';
+  return `<div class="exc ${g?'g':'b'}"><div class="exh"><b>${g?'✓':'✗'} Example ${i+1} — ${g?'OK':(LAB[t.v]||t.v).toLowerCase()}</b> <span>${Math.round((t.t||0)*1000)} ms</span></div>
+  <div class="ex3"><div><small>Input</small><pre>${esc(t.inp||'')}</pre></div><div><small>Expected</small><pre>${esc(t.exp||'')}</pre></div><div><small>Got</small><pre>${esc(t.out||'')}</pre></div></div>
+  ${t.err?`<small>Stderr</small><pre>${esc(t.err)}</pre>`:''}${!g&&t.info?`<p class="hn">${esc(t.info)}</p>`:''}</div>`}).join('')}
+async function runEx(){if(busy)return;busy=true;updLock();$('#st').textContent='Running examples…';
+ const code=gc(),pid=S.pid,lang=S.lang,key=curKey(),p=pr(pid);let r;
+ try{r=await runLocal(lang,code,p.ex.map(e=>({i:e.i,o:e.o})))}
+ catch(e){busy=false;updLock();const st=$('#st');if(st)st.textContent='Қате: '+(e.message||e);return}
+ busy=false;const all=!!r.res&&r.res.length>0&&r.res.every(t=>t.v=='AC');
+ exState={pid,html:exHtml(r)};okKey=all?key:null;
+ const st=$('#st'),box=$('#exr');if(st)st.textContent=all?'All examples passed ✓':'';if(box)box.innerHTML=exState.html;updLock()}
+const toggleCu=()=>{const d=$('#cu');S.cuOpen=d.style.display=='none';d.style.display=S.cuOpen?'block':'none';save()};
+async function cppOne(code,inp){const J='https://ce.judge0.com',H={'Content-Type':'application/json'},
+ body=JSON.stringify({source_code:code,language_id:54,stdin:inp,cpu_time_limit:3});
+ let r=await fetch(J+'/submissions?base64_encoded=false&wait=true',{method:'POST',headers:H,body}),tx=await r.text();
+ if(!r.ok&&/wait/i.test(tx)){r=await fetch(J+'/submissions?base64_encoded=false',{method:'POST',headers:H,body});tx=await r.text()}
+ if(!r.ok)throw new Error(`Judge0 қатесі ${r.status}: ${tx.slice(0,250)}`);
+ let g;try{g=JSON.parse(tx)}catch(e){throw new Error('Judge0 күтпеген жауап: '+tx.slice(0,250))}
+ for(let k=0;k<30&&g&&g.token&&(!g.status||g.status.id<=2);k++){await sleep(k<2?1500:2500);
+  const gr=await fetch(`${J}/submissions/${g.token}?base64_encoded=false`);g=JSON.parse(await gr.text())}
+ if(!g||!g.status)throw new Error('Judge0 жауап бермеді');return g}
+async function runCu(){if(busy)return;busy=true;updLock();const rc=$('#rc'),out=$('#cout');rc.disabled=true;out.innerHTML='<p>Running…</p>';
+ const code=gc(),lang=S.lang;let inp=$('#cin').value;if(inp&&!inp.endsWith('\n'))inp+='\n';let h;
+ try{await ensure();
+  if(lang=='cpp'){const g=await cppOne(code,inp),id=g.status.id;
+   h=id==6?`<b style="color:#b02020">Compilation error</b><pre>${esc(g.compile_output||'')}</pre>`
+    :`${id==3?'':`<b style="color:#b02020">${esc(id==5?'Time limit exceeded (3 s)':g.status.description)}</b>`} <span style="color:#666">${Math.round((+g.time||0)*1000)} ms</span><small style="display:block;color:#555">Output</small><pre>${esc(g.stdout||'')}</pre>${(g.stderr||g.message)?`<small style="color:#555">Stderr</small><pre>${esc((g.stderr||g.message).slice(-800))}</pre>`:''}`}
+  else{const ce=JSON.parse(await call('syntax',[code]));
+   if(ce.ce)h=`<b style="color:#b02020">Compilation error</b><pre>${esc(ce.ce)}</pre>`;
+   else{let t;try{t=JSON.parse(await call('run_py',[code,inp,'',0],TLMS))}catch(e){if(e!=='TIMEOUT')throw e;await ensure();t={v:'TLE',t:6,out:'',err:''}}
+    h=`${t.v=='RE'||t.v=='TLE'?`<b style="color:#b02020">${t.v=='TLE'?'Time limit exceeded (6 s)':esc(t.info||'Run-time error')}</b>`:''} <span style="color:#666">${Math.round((t.t||0)*1000)} ms</span><small style="display:block;color:#555">Output</small><pre>${esc(t.out||'')}</pre>${t.err?`<small style="color:#555">Stderr</small><pre>${esc(t.err)}</pre>`:''}`}}}
+ catch(e){h=`<b style="color:#b02020">Қате: ${esc(e.message||e)}</b>`}
+ busy=false;const o2=$('#cout');if(o2)o2.innerHTML=h;updLock();const b2=$('#rc');if(b2)b2.disabled=false}
+async function submit(){if(busy||(LOCK&&okKey!==curKey()))return;busy=true;updLock();$('#st').textContent='Testing…';const code=gc(),pid=S.pid,lang=S.lang;
+ let r;try{r=await runAll(pid,lang,code)}catch(e){busy=false;updLock();$('#st').textContent='Қате: '+(e.message||e);return}busy=false;
  const rn={id:S.next++,time:Date.now(),size:new Blob([code]).size,pid,lang,code,ce:r.ce||null,cel:r.cel||[],tests:r.res||[]};
  const f=rn.tests.find(t=>t.v!='AC');rn.result=rn.ce?'Compilation error':f?LAB[f.v]:'OK';rn.failed=rn.ce||!f?'N/A':f.n;
  S.runs.unshift(rn);save();lastId=rn.id;tab='info';arg=pid;render();$('#res').scrollIntoView()}
